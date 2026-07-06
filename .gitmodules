@@ -1,0 +1,3 @@
+[submodule "ui"]
+	path = ui
+	url = https://codeberg.org/Sylos/Sylos-UI.git

@@ -1,0 +1,11 @@
+/bin/
+/data/
+/config.yaml
+
+# OAuth credential JSON files (see creds/README.txt)
+/creds/*.json
+!/creds/.gitkeep
+!/creds/README.txt
+# UI build output copied from ui/ submodule before go build
+/internal/ui/dist/
+!/internal/ui/dist/index.html
