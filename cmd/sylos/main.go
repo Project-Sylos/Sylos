@@ -17,13 +17,15 @@ import (
 )
 
 const (
-	healthPollAttempts = 30
+	healthPollAttempts = 15
 	healthPollInterval = 200 * time.Millisecond
+	startupTimeout     = 120 * time.Second
 )
 
 func main() {
 	noBrowser := flag.Bool("no-browser", false, "do not open the web UI in a browser")
 	apiOnly := flag.Bool("api-only", false, "serve the API only; do not serve the embedded web UI")
+	useEnvKeys := flag.Bool("use-env-keys", false, "store install master key in creds/.env instead of OS keyring")
 	configPath := flag.String("config", "config.yaml", "path to config file")
 	port := flag.Int("port", 0, "HTTP port override (default from config)")
 	flag.Parse()
@@ -57,15 +59,24 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	ready := make(chan struct{})
 	errCh := make(chan error, 1)
 	go func() {
 		errCh <- app.Run(ctx, app.Options{
 			Config:        cfg,
 			StaticHandler: staticHandler,
+			UseEnvKeys:    *useEnvKeys,
+			Ready:         ready,
 		})
 	}()
 
 	if !*apiOnly && !*noBrowser {
+		if err := waitUntilReady(ready, errCh, startupTimeout); err != nil {
+			fmt.Fprintf(os.Stderr, "server failed to start: %v\n", err)
+			stop()
+			os.Exit(1)
+		}
+
 		if err := waitForHealthy(cfg.HTTP.Port); err != nil {
 			fmt.Fprintf(os.Stderr, "server health check failed: %v\n", err)
 			stop()
@@ -100,4 +111,21 @@ func waitForHealthy(port int) error {
 	}
 
 	return fmt.Errorf("timed out waiting for %s", url)
+}
+
+func waitUntilReady(ready <-chan struct{}, errCh <-chan error, timeout time.Duration) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case <-ready:
+		return nil
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("server exited during startup: %w", err)
+		}
+		return fmt.Errorf("server exited before becoming ready")
+	case <-timer.C:
+		return fmt.Errorf("timed out after %s waiting for HTTP listener", timeout)
+	}
 }

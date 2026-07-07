@@ -4,6 +4,7 @@
 
 # OAuth credential JSON files (see creds/README.txt)
 /creds/*.json
+/creds/.env
 !/creds/.gitkeep
 !/creds/README.txt
 # UI build output copied from ui/ submodule before go build

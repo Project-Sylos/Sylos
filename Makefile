@@ -15,7 +15,7 @@ ui: ui/dist
 
 ui/dist:
 	@test -d $(UI_DIR) || (echo "missing $(UI_DIR) submodule; run: git submodule update --init --recursive" && exit 1)
-	cd $(UI_DIR) && npm ci --legacy-peer-deps && OAUTH_CREDS_DIR=$(CURDIR)/creds VITE_API_BASE= npm run build
+	cd $(UI_DIR) && npm ci --legacy-peer-deps && VITE_API_BASE= npm run build
 	rm -rf $(UI_DIST)
 	mkdir -p $(UI_DIST)
 	cp -r $(UI_DIR)/dist/. $(UI_DIST)/
