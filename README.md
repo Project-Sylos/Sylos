@@ -1,6 +1,6 @@
 # Sylos
 
-Sylos is a self-hosted migration platform — one binary that runs the API and serves the web UI, similar to Jellyfin or Navidrome.
+Sylos is a self-hosted migration platform. One binary that runs the API and serves the web UI, similar to Jellyfin or Navidrome.
 
 ## Quick start
 
@@ -45,16 +45,16 @@ Examples:
 
 Copy [`config.yaml.example`](config.yaml.example) to `config.yaml` and adjust:
 
-- `http.port` — listening port (default: 8086)
-- `runtime.data_dir` — persistent data directory
-- `services.local` — allowlisted local filesystem roots
-- `jwt.access_token_ttl` — session length (default: 24h)
-- `auth.bcrypt_cost` — password hashing cost (default: 12)
-- `runtime.oauth_creds_dir` — cloud OAuth JSON directory (default: `./creds`)
+- `http.port` listening port (default: 8086)
+- `runtime.data_dir` persistent data directory
+- `services.local` allowlisted local filesystem roots
+- `jwt.access_token_ttl` session length (default: 24h)
+- `auth.bcrypt_cost` password hashing cost (default: 12)
+- `runtime.oauth_creds_dir` cloud OAuth JSON directory (default: `./creds`)
 
 Environment variables use the `SYLOS_` prefix (e.g. `SYLOS_HTTP_PORT=9090`, `SYLOS_CONFIG_PATH=/path/to/config.yaml`).
 
-Cloud OAuth credentials live in **`./creds/`** next to `config.yaml` (see [`creds/README.txt`](creds/README.txt)). The API reads them at runtime for server-side OAuth token exchange — secrets never reach the browser. Restart the server after changing credential files. The server also falls back to `ui/creds/` if present.
+Cloud OAuth credentials live in **`./creds/`** next to `config.yaml` (see [`creds/README.txt`](creds/README.txt)). The API reads them at runtime for server-side OAuth token exchange. Secrets never reach the browser. Restart the server after changing credential files. The server also falls back to `ui/creds/` if present.
 
 ## Building from source
 
