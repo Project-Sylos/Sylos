@@ -4,6 +4,7 @@
 
 - [x] Minor UI polish / tweaks
 - [ ] More end to end testing of various things
+- [ ] Migrate off of DigitalOcean DNS to CloudFlare so we can redirect the chat.sylos.io site to the permanent discord invite link.
 
 ### Before Broader Alpha (IT firms / local business testing)
 
