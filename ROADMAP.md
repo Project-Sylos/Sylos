@@ -31,9 +31,4 @@
 - [ ] **Filter rules engine**: composable rules (include/exclude by pattern, age, metadata, etc.) with combinations/negations
   - Applied during traversal; excluded items don't get traversed further
   - Review UI lets users unmark auto-filtered items, triggering retraversal for just those items
-
-
-
-### After V1 (or whenever)
-
 - [ ] **Offline docs embedding**: pull `sylos.wiki` repo into build pipeline, render MD → HTML/CSS, bundle into UI for offline/locked-down environments (piggybacks on build script work)
