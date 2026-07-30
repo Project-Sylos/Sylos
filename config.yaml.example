@@ -10,7 +10,10 @@ runtime:
   migration_db_storage_dir: "./data/migration-dbs"
   oauth_creds_dir: "./creds"
   log_address: "127.0.0.1:8081"
-  log_level: "info"
+  # Use "debug" while diagnosing copy/traversal mismatches and worker failures.
+  # Levels: trace, debug, info, warning, error, critical. DB stores all levels;
+  # UDP terminal only emits at or above this threshold.
+  log_level: "debug"
   enable_logging_terminal: false
   default_worker_count: 10
   default_max_retries: 3
@@ -28,7 +31,7 @@ providers:
     scopes:
       - "https://www.googleapis.com/auth/drive"
   dropbox:
-    enabled: false
+    enabled: true
     display_name: "Dropbox"
     service_id: dropbox
     scopes:
@@ -38,3 +41,30 @@ providers:
       - account_info.read
       - sharing.read
       - team_data.team_space
+  onedrive:
+    enabled: true
+    display_name: "OneDrive"
+    service_id: onedrive
+    scopes:
+      - Files.ReadWrite.All
+      - offline_access
+      - User.Read
+  sharepoint:
+    enabled: true
+    display_name: "SharePoint"
+    service_id: sharepoint
+    scopes:
+      - Sites.ReadWrite.All
+      - Files.ReadWrite.All
+      - offline_access
+      - User.Read
+  box:
+    enabled: true
+    display_name: "Box"
+    service_id: box
+    scopes:
+      - root_readwrite
+  sftp:
+    enabled: true
+    display_name: "SFTP"
+    service_id: sftp

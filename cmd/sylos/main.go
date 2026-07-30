@@ -83,7 +83,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		url := fmt.Sprintf("http://127.0.0.1:%d/", cfg.HTTP.Port)
+		url := fmt.Sprintf("http://localhost:%d/", cfg.HTTP.Port)
 		if err := browser.OpenURL(url); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to open browser (visit %s manually): %v\n", url, err)
 		}
