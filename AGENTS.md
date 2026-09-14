@@ -17,7 +17,7 @@ Local development uses sibling repos under one parent (see [README.md](./README.
 Sylos/                  ← this repo: unified binary (API + embedded UI)
 Sylos-API/              ← REST/API library the binary embeds
 Sylos-UI/               ← React/Vite UI (git submodule at ui/ here)
-Migration-Engine/       ← migration SDK (queues, DuckDB, scaling)
+Migration-Engine/       ← migration SDK (queues, Badger ops store, scaling)
 Sylos-FS/               ← FS adapters (local, cloud, Spectra, SFTP, …)
 Spectra/                ← synthetic FS for chaos / integration tests
 ```
@@ -35,7 +35,7 @@ Other nearby trees (docs / site / tooling, not always on the critical path): `Sy
 | **Sylos** | Product launcher: builds UI, embeds it, runs API on one port (~8086). Config, OAuth creds dir, first-run admin. | [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [config.yaml.example](./config.yaml.example) |
 | **Sylos-API** | Chi REST layer, auth/JWT, corebridge → Migration Engine, provider/OAuth routes, migration lifecycle. | [../Sylos-API/README.md](../Sylos-API/README.md), [../Sylos-API/internal/routes/migrations/README.md](../Sylos-API/internal/routes/migrations/README.md) |
 | **Sylos-UI** | Browser UI (Vite/React); talks to API (dev often `:3000` → API `:8086`). | [../Sylos-UI/README.md](../Sylos-UI/README.md) (submodule: [ui/README.md](./ui/README.md)) |
-| **Migration-Engine** | One-way migration engine: BFS traversal/copy/delete, queues, DuckDB seal, autoscaler. **Not** bidirectional sync. | [../Migration-Engine/README.md](../Migration-Engine/README.md) + **docs below** |
+| **Migration-Engine** | One-way migration engine: BFS traversal/copy/delete, queues, Badger seal, autoscaler. **Not** bidirectional sync. | [../Migration-Engine/README.md](../Migration-Engine/README.md) + **docs below** |
 | **Sylos-FS** | `FSAdapter` implementations and cloud OAuth session plumbing used by API + ME. | [../Sylos-FS/README.md](../Sylos-FS/README.md), [../Sylos-FS/pkg/fs/README.md](../Sylos-FS/pkg/fs/README.md), [../Sylos-FS/docs/cloud_provider_checklist.md](../Sylos-FS/docs/cloud_provider_checklist.md) |
 | **Spectra** | Fake filesystem + chaos rate limits for ME/FS integration tests. | [../Spectra/README.md](../Spectra/README.md), [../Spectra/sdk/README.md](../Spectra/sdk/README.md) |
 
@@ -49,8 +49,9 @@ Canonical design docs live in **`../Migration-Engine/docs/`**:
 |-----|----------|
 | [algorithms.md](../Migration-Engine/docs/algorithms.md) | BFS vs DFS, SRC/DST coordination, copy two-pass, delete reverse-BFS, completion rules |
 | [autoscaler.md](../Migration-Engine/docs/autoscaler.md) | Observer → AIMD loop, FS throttle / memory / underfeed, operation profiles, knobs |
-| [item_statuses.md](../Migration-Engine/docs/item_statuses.md) | Traversal / copy / delete status semantics (event-sourced in DuckDB) |
+| [item_statuses.md](../Migration-Engine/docs/item_statuses.md) | Traversal / copy / delete status semantics (event-sourced in Badger) |
 | [fs_error_classification.md](../Migration-Engine/docs/fs_error_classification.md) | Retry vs throttle axes, ambiguous local/FUSE errors, degradation bridge |
+| [search_indexes.md](../Migration-Engine/docs/search_indexes.md) | Path-segment (`idx:seg`) and trigram (`idx:tri`) review search: postings, planner, what is not an index |
 
 Package-level detail:
 
@@ -67,10 +68,11 @@ Package-level detail:
 ## Hard invariants agents must respect
 
 1. **One-way migration** — ME discovers and copies SRC→DST; do not invent two-way sync semantics.
-2. **DuckDB is source of truth** for frontier / status; queues pull from DB and seal results back (see queue + db READMEs).
+2. **Badger is operational SoT** — frontier, status, tree nav, review mutations, stats, and telemetry live in `{id}.ops/` (Badger via `pkg/opsdb`). Queues pull from Badger `pend:*` + `st:*`; no per-task catalog hits on the hot path. There is no per-migration DuckDB catalog.
 3. **Byte streaming on OpenWrite** — Sylos-FS adapters must stream SRC→DST in small in-memory chunks. **No spill-to-temp / full-file staging** before upload. Dropbox/GDrive-style session start/append/finish is fine; Graph/Box must PUT fragments during `Write`, not buffer the whole object until `Close`. See Sylos-FS cloud checklist + ME algorithms copy section.
 4. **Autoscaler owns throughput knobs** — API/UI observe and pause/stop; they do not set worker counts. Profiles live in ME `pkg/scaling/profile`; the control loop is `pkg/scaling/loop`.
 5. **Throttle ≠ stall** — Queue watchdog “STALL DETECTED” means no progress heartbeats with work leased. Active `RateLimitedUntil` / seal I/O wait **suppress** that dump. Fix missing beats (e.g. close-only uploads) rather than treating every stall banner as AIMD failure.
+6. **No per-task DB hits** — In Migration-Engine queue hot paths (pull → worker → complete/fail), **never** query Badger once per task or per child beyond batched pull/list APIs. Prefetch everything needed in **batched** pull/list queries (or join it into the existing pull), package it onto the task (`Expected*` maps, `SrcParentDeleteStatus`, `GPLState`, etc.), then compare/complete in memory and only **append** to the seal buffer. `GetNodeByID` / `GetNodeByPath` inside a per-item completion loop is a hard ban; it caused multi-10x dual-queue throughput cliffs. Same rule for copy/delete/GPL completes.
 7. **Minimal diffs** — match existing style; no drive-by refactors; don’t commit unless asked.
 
 ---
