@@ -47,6 +47,7 @@ Canonical design docs live in **`../Migration-Engine/docs/`**:
 
 | Doc | Contents |
 |-----|----------|
+| [ops_store_overview.md](../Migration-Engine/docs/ops_store_overview.md) | Intro: Badger write-heavy (discovery/copy/delete) vs review/search/filters, seal buffer, light schema map |
 | [algorithms.md](../Migration-Engine/docs/algorithms.md) | BFS vs DFS, SRC/DST coordination, copy two-pass, delete reverse-BFS, completion rules |
 | [autoscaler.md](../Migration-Engine/docs/autoscaler.md) | Observer → AIMD loop, FS throttle / memory / underfeed, operation profiles, knobs |
 | [item_statuses.md](../Migration-Engine/docs/item_statuses.md) | Traversal / copy / delete status semantics (event-sourced in Badger) |
