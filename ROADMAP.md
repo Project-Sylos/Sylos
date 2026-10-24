@@ -26,7 +26,10 @@
 - [ ] **Symlink / junction policy**: exclude by default in V1; ensure traversal inspects item *type* only (not target) to avoid loops
 - [ ] **Installer / uninstaller**: not strictly required (zip/tar works), but wanted for polish
 - [ ] **Build script**: makefile-style script to build + run tests per-repo, plus a broader integration test runner for pre-release regression checks
-
+- [ ] **DB Transfer Security Model**: build a good security model for transferring DB files across Sylos instances so sensitive credential info isn't stored and transferred when exported / uploaded. 
+- [ ] **Sign out without breaking active migrations**: Make it so all users can sign out of sylos while an active migration is running, as long as the sylos backend process is not stopped this should not stop any active migrations from running. Separately, they should be able to log in again during an active migration without interrupting it
+- [ ] **New Wiki Article**: Set up wiki article for how to import / export migration DBs
+- [ ] **Set up Github Discussions page**: Set up Github's discussion page so that we have sections for the typical things people would want / ask for to get it ready for forum usage for the community before testing starts.
 
 ### After Alpha, Before/Around Beta
 
@@ -41,13 +44,9 @@
   - [x] Everything above
   - [ ] More real-world scenario testing is still needed for full confidence (I'd say this is about 80-90% done)
 - [x] **Filter rules engine**: composable rules (include/exclude by pattern, age, metadata, etc.) with combinations/negations
-  - [x] Compiled to SQL over the discovered DuckDB inventory (post-traversal / path review); not applied during BFS
   - [x] Preview then exclude-all-matching with spare list; provenance via `filter_applications` + `exclusion_source`
   - [x] Local FS omits `.DS_Store` / `Thumbs.db` at list time (not via filters)
 - [ ] **Offline docs embedding**: pull `sylos.wiki` repo into build pipeline, render MD → HTML/CSS, bundle into UI for offline/locked-down environments (piggybacks on build script work)
-- [ ] **Excel report outputs and final dashboard**
-  - Build an in-app dashboard showing run metrics: API/OS call counts, item modifications, copies, total bytes moved, etc.
-  - Make metrics exportable to Excel (async job or similar if needed)
-- [ ] **Implement scan only mode** 
-  - Build a feature where you can scan a singular source against no destination, purely for scanning and logging purposes, maybe for future automations.
-- [ ] Build automation hooks and allow for recurring migration / scanning scheduling
+- [ ] **Implement scan only mode**: Build a feature where you can scan a singular source against no destination, purely for scanning and logging purposes, maybe for future automations.
+- [ ] **Automation hooks**: Build automation hooks and allow for recurring migration / scanning scheduling
+- [ ] **Terminal UI**: Finish work on Terminal UI to catch it up to the main Web UI and make it a viable (and user friendly) option for those wanting to opt out of the Web UI instead.
