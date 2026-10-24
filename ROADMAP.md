@@ -1,13 +1,8 @@
 ## Sylos Roadmap / TODO
 
-### Next Immediate Building
-
-- [x] More end to end testing of various things
-- [x] Migrate off of DigitalOcean DNS to CloudFlare so we can redirect the chat.sylos.io site to the permanent discord invite link.
-- [x] Switch back to GitHub
-
 ### Before Broader Alpha (IT firms / local business testing)
 
+- [x] Switch back to GitHub
 - [x] **FS providers**: add SharePoint, OneDrive, and Box at minimum 
 - [ ] **Autoscaler tuning (overall)**: validate large-scale behavior on all FS classes, ensure performance is optimized and not misbehaving. Add support for lower and upper bounds to prevent autoscaler from exceeding safe/constrained limits, especially for session-based operations (e.g., rate of uploaded/downloaded chunks).
   - [x] Autoscaler: Local - Physical Disk
