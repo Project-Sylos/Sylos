@@ -49,7 +49,8 @@ Canonical design docs live in **`../Migration-Engine/docs/`**:
 |-----|----------|
 | [ops_store_overview.md](../Migration-Engine/docs/ops_store_overview.md) | Intro: Badger write-heavy (discovery/copy/delete) vs review/search/filters, seal buffer, light schema map |
 | [algorithms.md](../Migration-Engine/docs/algorithms.md) | BFS vs DFS, SRC/DST coordination, copy two-pass, delete reverse-BFS, completion rules |
-| [autoscaler.md](../Migration-Engine/docs/autoscaler.md) | Observer → AIMD loop, FS throttle / memory / underfeed, operation profiles, knobs |
+| [crash_recovery.md](../Migration-Engine/docs/crash_recovery.md) | Soft stop / hard stop / crash heal / unclean Resume: overview + per-mode steps |
+| [autoscaler.md](../Migration-Engine/docs/autoscaler.md) | Observer → autoscaler loop, FS throttle / memory / underfeed, operation profiles, knobs |
 | [item_statuses.md](../Migration-Engine/docs/item_statuses.md) | Traversal / copy / delete status semantics (event-sourced in Badger) |
 | [fs_error_classification.md](../Migration-Engine/docs/fs_error_classification.md) | Retry vs throttle axes, ambiguous local/FUSE errors, degradation bridge |
 | [search_indexes.md](../Migration-Engine/docs/search_indexes.md) | Path-segment (`idx:seg`) and trigram (`idx:tri`) review search: postings, planner, what is not an index |
@@ -60,7 +61,7 @@ Package-level detail:
 |-----|----------|
 | [pkg/queue/README.md](../Migration-Engine/pkg/queue/README.md) | Pull / lease / seal; subpackages `mode` / `worker` / `observe` / `gpl` (children import root; migration blank-imports hooks) |
 | [pkg/db/README.md](../Migration-Engine/pkg/db/README.md) | Schema, SealBuffer, status events, indexes; same root/child pyramid as queue |
-| [pkg/scaling/README.md](../Migration-Engine/pkg/scaling/README.md) | Thin root contract + `profile` / `aimd` / `memory` / `backend` / `loop` (loop owns Autoscaler) |
+| [pkg/scaling/README.md](../Migration-Engine/pkg/scaling/README.md) | Thin root contract + `profile` / `softcap` / `memory` / `backend` / `loop` (loop owns Autoscaler) |
 | [pkg/migration/README.md](../Migration-Engine/pkg/migration/README.md) | Entry points, manager lifecycle, phase wiring |
 | [pkg/tests/README.md](../Migration-Engine/pkg/tests/README.md) | How integration / chaos tests are organized |
 
@@ -72,7 +73,7 @@ Package-level detail:
 2. **Badger is operational SoT** — frontier, status, tree nav, review mutations, stats, and telemetry live in `{id}.ops/` (Badger via `pkg/opsdb`). Queues pull from Badger `pend:*` + `st:*`; no per-task catalog hits on the hot path. There is no per-migration DuckDB catalog.
 3. **Byte streaming on OpenWrite** — Sylos-FS adapters must stream SRC→DST in small in-memory chunks. **No spill-to-temp / full-file staging** before upload. Dropbox/GDrive-style session start/append/finish is fine; Graph/Box must PUT fragments during `Write`, not buffer the whole object until `Close`. See Sylos-FS cloud checklist + ME algorithms copy section.
 4. **Autoscaler owns throughput knobs** — API/UI observe and pause/stop; they do not set worker counts. Profiles live in ME `pkg/scaling/profile`; the control loop is `pkg/scaling/loop`.
-5. **Throttle ≠ stall** — Queue watchdog “STALL DETECTED” means no progress heartbeats with work leased. Active `RateLimitedUntil` / seal I/O wait **suppress** that dump. Fix missing beats (e.g. close-only uploads) rather than treating every stall banner as AIMD failure.
+5. **Throttle ≠ stall** — Queue watchdog “STALL DETECTED” means no progress heartbeats with work leased. Active `RateLimitedUntil` / seal I/O wait **suppress** that dump. Fix missing beats (e.g. close-only uploads) rather than treating every stall banner as a scaling failure.
 6. **No per-task DB hits** — In Migration-Engine queue hot paths (pull → worker → complete/fail), **never** query Badger once per task or per child beyond batched pull/list APIs. Prefetch everything needed in **batched** pull/list queries (or join it into the existing pull), package it onto the task (`Expected*` maps, `SrcParentDeleteStatus`, `GPLState`, etc.), then compare/complete in memory and only **append** to the seal buffer. `GetNodeByID` / `GetNodeByPath` inside a per-item completion loop is a hard ban; it caused multi-10x dual-queue throughput cliffs. Same rule for copy/delete/GPL completes.
 7. **Minimal diffs** — match existing style; no drive-by refactors; don’t commit unless asked.
 
@@ -95,6 +96,8 @@ Package-level detail:
 2. Prefer using reusable functions over making a new function for every new thing.
 3. Prefer using a reusable function instead of making 2 similar functions with one or two changed things.
 4. No em-dashes anywhere, ever. Not even in code comments.
+5. No legacy support for anything. If something is deprecated, remove it. If something is no longer supported, remove it.
+6. When making adjustments to readmes or any kind of documentation, or even code comments, do not say things like 'Doing {x} now, we used to do {y}' just write about the current thing and adjust the old thing to match the reality of the new system.
 
 ### Go: avoid structural slop (Go-Slop-Finder)
 
