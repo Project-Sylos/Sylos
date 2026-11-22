@@ -52,3 +52,7 @@
 - [ ] **Implement scan only mode**: Build a feature where you can scan a singular source against no destination, purely for scanning and logging purposes, maybe for future automations.
 - [ ] **Automation hooks**: Build automation hooks and allow for recurring migration / scanning scheduling
 - [ ] **Terminal UI**: Finish work on Terminal UI to catch it up to the main Web UI and make it a viable (and user friendly) option for those wanting to opt out of the Web UI instead.
+
+### Maybe ? (At some point ?)
+
+- [ ] **Flutter UI rewrite**: Rewrite the UI in Flutter (but we can keep the same backend structure) instead of using a native web UI. 
