@@ -1,84 +1,90 @@
 # Sylos
 
-Sylos is a self-hosted migration platform. One binary that runs the API and serves the web UI, similar to Jellyfin or Navidrome.
+Sylos is a self-hosted migration platform. One binary runs the API and serves the web UI.
 
-## Quick start
+
+## Quick start (developers)
 
 ```bash
-# Clone with the UI submodule
-git clone --recurse-submodules https://codeberg.org/Sylos/Sylos.git
+# Clone with the UI submodule (dev convenience for Vite)
+git clone --recurse-submodules https://github.com/Project-Sylos/Sylos.git
 cd Sylos
 
-# Or, if already cloned:
-git submodule update --init --recursive
+# Sibling repos required for local `replace` builds (see Sylos-Dev-Utils clone_repos.sh)
+# Sylos-API, Migration-Engine, Sylos-FS, Spectra, go-path-linter
 
-# Configure (copy and edit paths/services as needed)
-cp config.yaml.example config.yaml
-
-# Build and run
 make build
 ./bin/sylos
 ```
 
-By default, `sylos` starts the API on port **8086**, serves the embedded web UI on the same port, and opens your browser once the server is healthy.
+By default Sylos:
 
-On first launch, the UI walks you through **creating an admin account** (Jellyfin/Navidrome-style). After that, all API routes require login. Admins can manage additional users under Settings → Users.
+- Listens on port **8086**
+- Serves the embedded web UI
+- Stores data under the OS app-data directory (`org.sylos.app`)
+- Requires an OS keyring for the install master key
+- Opens a browser when healthy
+
+First launch walks you through creating an admin account.
 
 ### CLI flags
 
 | Flag | Description |
 |------|-------------|
-| `--no-browser` | Start the server and serve the UI, but do not open a browser |
-| `--api-only` | Serve the API only (no embedded UI; for TUI or external clients) |
-| `--config PATH` | Config file path (default: `config.yaml`) |
-| `--port PORT` | Override the HTTP port from config |
+| `--no-browser` | Start the server without opening a browser |
+| `--api-only` | Serve the API only (no embedded UI) |
+| `--port PORT` | Override the HTTP port (default 8086) |
 
-Examples:
+There is no `config.yaml`. Defaults are baked into the binary.
 
-```bash
-./bin/sylos --no-browser
-./bin/sylos --api-only
-./bin/sylos --config /etc/sylos/config.yaml --port 9090
-```
+### Tests before compile
 
-### Configuration
+`make build` and `make release` run `make test-all` first: `go test ./... -count=1` in this repo and each present replace sibling (`Sylos-API`, `Migration-Engine`, `Sylos-FS`, `Spectra`, `go-path-linter`). Missing siblings are skipped. If any suite fails, the run finishes the rest, prints a short summary of which repos failed (full FAIL lines and traces stay above), and exits without compiling. Use `make test` for this repo only.
 
-Copy [`config.yaml.example`](config.yaml.example) to `config.yaml` and adjust:
+### Cloud OAuth apps (release builds)
 
-- `http.port` listening port (default: 8086)
-- `runtime.data_dir` persistent data directory
-- `services.local` allowlisted local filesystem roots
-- `jwt.access_token_ttl` session length (default: 24h)
-- `auth.bcrypt_cost` password hashing cost (default: 12)
-- `runtime.oauth_creds_dir` cloud OAuth JSON directory (default: `./creds`)
+Non-Google provider apps (Dropbox, Box, OneDrive, SharePoint) are baked at link time from committed files:
 
-Environment variables use the `SYLOS_` prefix (e.g. `SYLOS_HTTP_PORT=9090`, `SYLOS_CONFIG_PATH=/path/to/config.yaml`).
+| File | Role |
+|------|------|
+| [`oauth.env`](./oauth.env) | Provider client IDs / secrets / optional Microsoft tenant IDs as `enc:…` values |
+| [`oauth.key`](./oauth.key) | Build key used to reveal those values (`make oauth-genkey` once if missing) |
 
-Cloud OAuth credentials live in **`./creds/`** next to `config.yaml` (see [`creds/README.txt`](creds/README.txt)). The API reads them at runtime for server-side OAuth token exchange. Secrets never reach the browser. Restart the server after changing credential files. The server also falls back to `ui/creds/` if present.
+Workflow:
+
+1. Put plaintext values in `oauth.env` (blank line skips that provider).
+2. Run `make oauth-encrypt` so non-empty values become `enc:…`.
+3. `make build` / `make release` reveal with `oauth.key` and pass them through `-ldflags`.
+
+The key and ciphertext are both in the repo on purpose. That keeps secrets out of plain git diffs and casual scanners; it is not a secrecy boundary. A release binary still embeds the revealed values. Admins can override apps in Settings. Google Drive remains bring-your-own-app.
+
+When ldflags did not bake credentials (for example `go run` from this tree), startup loads `oauth.env` + `oauth.key` from the working directory if present and fills empty builtin slots before seeding `sylos.api`.
+
+The **Release** workflow runs `make release` the same way. If siblings are private, set Actions secret `SIBLING_CHECKOUT_TOKEN`.
 
 ## Building from source
 
-Requires Go 1.25+, Node.js/npm (for the UI submodule), and sibling repos for local development:
+Requires Go matching `go.mod`, Node.js/npm (to produce `internal/ui/dist`), and sibling repos for `replace` directives:
 
 ```
 Sylos/                  ← this repo (unified binary)
 Sylos-API/              ← API server library
-Sylos-UI/               ← web UI (git submodule at ui/)
+Sylos-UI/               ← web UI (optional submodule at ui/ for Vite)
 Migration-Engine/       ← migration SDK
 Sylos-FS/               ← filesystem adapters
 ```
 
-The `go.mod` in this repo uses `replace` directives pointing at `../Sylos-API`, `../Migration-Engine`, etc. Match the layout from [Sylos-Dev-Utils](https://codeberg.org/Sylos/Sylos-Dev-Utils) `clone_repos.sh` for local dev.
-
 ```bash
-make build    # builds ui/dist, embeds it, produces bin/sylos
-make run      # build + run with default flags
-make clean    # remove bin/ and copied UI dist
+make build     # test-all → ui/dist → bin/sylos
+make run       # build + run
+make test-all  # sibling go test suites only
+make release   # build + zip under dist/
+make clean
 ```
 
-## Developing individual components
+Compile only needs a filled `internal/ui/dist` for `go:embed`. The `ui/` submodule is a local Vite convenience; a release can build assets from the Sylos-UI sibling instead.
 
-When working on a single repo, you can still run pieces separately:
+## Developing individual components
 
 **API only** (Sylos-API):
 
@@ -97,18 +103,14 @@ npm run dev   # http://127.0.0.1:3000 → API at http://localhost:8086
 
 ## Under Construction Note
 
-This repo is under active development. For early alpha testing and contributor coordination, join the official Discord at https://chat.sylos.io/.
-
-## Contributing
-
-See pinned messages in the #bounties channel on Discord, or the [Active ongoing issues and roadmap](https://codeberg.org/Sylos/Discussions-and-Issues/issues/5) page for dev and creative work needed.
+This repo is under active development. For early alpha testing and contributor coordination, use [GitHub Discussions](https://github.com/orgs/Project-Sylos/discussions).
 
 ## Related repositories
 
 | Repo | Role |
 |------|------|
-| [Sylos-API](https://codeberg.org/Sylos/Sylos-API) | REST API and Migration Engine bridge |
-| [Sylos-UI](https://codeberg.org/Sylos/Sylos-UI) | React web UI (submodule) |
-| [Migration-Engine](https://codeberg.org/Sylos/Migration-Engine) | Core migration SDK |
-| [Sylos-FS](https://codeberg.org/Sylos/Sylos-FS) | Filesystem adapters |
-| [Spectra](https://codeberg.org/Sylos/Spectra) | Synthetic filesystem simulator |
+| [Sylos-API](https://github.com/Project-Sylos/Sylos-API) | REST API and Migration Engine bridge |
+| [Sylos-UI](https://github.com/Project-Sylos/Sylos-UI) | React web UI |
+| [Migration-Engine](https://github.com/Project-Sylos/Migration-Engine) | Core migration SDK |
+| [Sylos-FS](https://github.com/Project-Sylos/Sylos-FS) | Filesystem adapters |
+| [Spectra](https://github.com/Project-Sylos/Spectra) | Synthetic filesystem simulator |

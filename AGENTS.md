@@ -32,7 +32,7 @@ Other nearby trees (docs / site / tooling, not always on the critical path): `Sy
 
 | Repo | Role | Start here |
 |------|------|------------|
-| **Sylos** | Product launcher: builds UI, embeds it, runs API on one port (~8086). Config, OAuth creds dir, first-run admin. | [README.md](./README.md), [ROADMAP.md](./ROADMAP.md), [config.yaml.example](./config.yaml.example) |
+| **Sylos** | Product launcher: builds UI, embeds it, runs API on one port (~8086). Baked-in defaults, OS keyring master key, first-run admin. | [README.md](./README.md), [ROADMAP.md](./ROADMAP.md) |
 | **Sylos-API** | Chi REST layer, auth/JWT, corebridge → Migration Engine, provider/OAuth routes, migration lifecycle. | [../Sylos-API/README.md](../Sylos-API/README.md), [../Sylos-API/internal/routes/migrations/README.md](../Sylos-API/internal/routes/migrations/README.md) |
 | **Sylos-UI** | Browser UI (Vite/React); talks to API (dev often `:3000` → API `:8086`). | [../Sylos-UI/README.md](../Sylos-UI/README.md) (submodule: [ui/README.md](./ui/README.md)) |
 | **Migration-Engine** | One-way migration engine: BFS traversal/copy/delete, queues, Badger seal, autoscaler. **Not** bidirectional sync. | [../Migration-Engine/README.md](../Migration-Engine/README.md) + **docs below** |
@@ -120,8 +120,8 @@ Agents writing or editing Go must follow the no-slop style in [`../../Go-Slop-Fi
 
 ```bash
 # from Sylos/
-cp config.yaml.example config.yaml   # once
 make build && ./bin/sylos
+# friends / alpha: make release → dist/sylos-alpha.zip
 ```
 
 UI submodule: `ui/` (or sibling Sylos-UI). API-only / no-browser flags are in [README.md](./README.md).

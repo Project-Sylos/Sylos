@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"codeberg.org/Sylos/Sylos/internal/browser"
-	sylosui "codeberg.org/Sylos/Sylos/internal/ui"
 	"codeberg.org/Sylos/Sylos-API/pkg/app"
 	"codeberg.org/Sylos/Sylos-API/pkg/config"
+	"codeberg.org/Sylos/Sylos/internal/browser"
+	sylosui "codeberg.org/Sylos/Sylos/internal/ui"
 )
 
 const (
@@ -25,17 +25,8 @@ const (
 func main() {
 	noBrowser := flag.Bool("no-browser", false, "do not open the web UI in a browser")
 	apiOnly := flag.Bool("api-only", false, "serve the API only; do not serve the embedded web UI")
-	useEnvKeys := flag.Bool("use-env-keys", false, "store install master key in creds/.env instead of OS keyring")
-	configPath := flag.String("config", "config.yaml", "path to config file")
-	port := flag.Int("port", 0, "HTTP port override (default from config)")
+	port := flag.Int("port", 0, "HTTP port override (default 8086)")
 	flag.Parse()
-
-	if *configPath != "" {
-		if err := os.Setenv("SYLOS_CONFIG_PATH", *configPath); err != nil {
-			fmt.Fprintf(os.Stderr, "failed to set config path: %v\n", err)
-			os.Exit(1)
-		}
-	}
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -65,7 +56,6 @@ func main() {
 		errCh <- app.Run(ctx, app.Options{
 			Config:        cfg,
 			StaticHandler: staticHandler,
-			UseEnvKeys:    *useEnvKeys,
 			Ready:         ready,
 		})
 	}()

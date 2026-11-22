@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Sylos
+
+    steps:
+      - name: Checkout Sylos
+        uses: actions/checkout@v4
+        with:
+          path: Sylos
+
+      # Private siblings need a PAT with contents:read on Project-Sylos/*.
+      # Fall back to github.token when those repos are readable with the default token.
+      - name: Checkout Sylos-API
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Sylos-API
+          path: Sylos-API
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Checkout Migration-Engine
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Migration-Engine
+          path: Migration-Engine
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Checkout Sylos-FS
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Sylos-FS
+          path: Sylos-FS
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Checkout Spectra
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Spectra
+          path: Spectra
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Checkout Go-Path-Linter
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Go-Path-Linter
+          path: go-path-linter
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Checkout Sylos-UI
+        uses: actions/checkout@v4
+        with:
+          repository: Project-Sylos/Sylos-UI
+          path: Sylos-UI
+          token: ${{ secrets.SIBLING_CHECKOUT_TOKEN || github.token }}
+
+      - name: Link UI for make ui/dist
+        run: ln -sfn ../Sylos-UI ui
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: Sylos/go.mod
+          cache-dependency-path: |
+            Sylos/go.sum
+            Sylos-API/go.sum
+            Migration-Engine/go.sum
+            Sylos-FS/go.sum
+            Spectra/go.sum
+            go-path-linter/go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: Sylos-UI/package-lock.json
+
+      - name: Release (test-all → UI → bake oauth.env → zip)
+        run: make release
+
+      - name: Upload alpha zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sylos-alpha
+          path: Sylos/dist/sylos-alpha.zip
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Sylos/dist/sylos-alpha.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
