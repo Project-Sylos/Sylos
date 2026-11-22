@@ -23,16 +23,18 @@
   - [x] Autoscaler: Box: Confirm scaling honors limits for upload/download, prevents timeout/stall scenarios.
   - [x] Autoscaler: Google Drive: Test at scale, dial in lower/upper bounds for stable and performant operation.
 - [x] **Size Comparisons**: Path Review shows Size (Src) / Selected / Size (Dst) / Free (Dest); selected size updates via exclude deltas; optional per-provider free space (Sylos-FS `FSStorageInfo`) with soft over-capacity warnings in review and root selection.
-- [ ] **Symlink / junction policy**: exclude by default in V1; ensure traversal inspects item *type* only (not target) to avoid loops
-- [ ] **Installer / uninstaller**: not strictly required (zip/tar works), but wanted for polish
-- [ ] **Build script**: makefile-style script to build + run tests per-repo, plus a broader integration test runner for pre-release regression checks
-- [ ] **DB Transfer Security Model**: build a good security model for transferring DB files across Sylos instances so sensitive credential info isn't stored and transferred when exported / uploaded. 
-- [ ] **Sign out without breaking active migrations**: Make it so all users can sign out of sylos while an active migration is running, as long as the sylos backend process is not stopped this should not stop any active migrations from running. Separately, they should be able to log in again during an active migration without interrupting it
+- [x] **Symlink / junction policy**: exclude by default in V1; ensure traversal inspects item *type* only (not target) to avoid loops
+
+- [x] **DB Transfer Security Model**: build a good security model for transferring DB files across Sylos instances so sensitive credential info isn't stored and transferred when exported / uploaded. 
+- [x] **Sign out without breaking active migrations**: Make it so all users can sign out of sylos while an active migration is running, as long as the sylos backend process is not stopped this should not stop any active migrations from running. Separately, they should be able to log in again during an active migration without interrupting it
 - [ ] **New Wiki Article**: Set up wiki article for how to import / export migration DBs
-- [ ] **Set up Github Discussions page**: Set up Github's discussion page so that we have sections for the typical things people would want / ask for to get it ready for forum usage for the community before testing starts.
+- [x] **Set up Github Discussions page**: Set up Github's discussion page so that we have sections for the typical things people would want / ask for to get it ready for forum usage for the community before testing starts.
 
 ### After Alpha, Before/Around Beta
 
+- [ ] **Installer / uninstaller**: not strictly required (zip/tar works), but wanted for polish
+- [ ] **OTA Updates and post the app on discover store**: OTA updates and post the app on discover store for easier installation and updates. Also for mac os and windows post on their respective app stores. If no app store, have it ping the git repo to see if a more recent version is available to let the user know and then point them to the git repo to download the latest version. Also add a button to turn off notifying for non-critical updates or something.
+- [ ] **Build script**: makefile-style script to build + run tests per-repo, plus a broader integration test runner for pre-release regression checks
 - [ ] **Path Verifier Library (in progress via Go-Path-Linter, needs more test coverage)**
   - Initial implementation exists as Go-Path-Linter (GPL); core logic building out
   - Cross-platform + cross-provider path verification and cleaning
