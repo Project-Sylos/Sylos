@@ -16,7 +16,7 @@ Local development uses sibling repos under one parent (see [README.md](./README.
 ```
 Sylos/                  ← this repo: unified binary (API + embedded UI)
 Sylos-API/              ← REST/API library the binary embeds
-Sylos-UI/               ← React/Vite UI (git submodule at ui/ here)
+Sylos-UI/               ← React/Vite UI (optional symlink at ui/ → ../Sylos-UI)
 Migration-Engine/       ← migration SDK (queues, Badger ops store, scaling)
 Sylos-FS/               ← FS adapters (local, cloud, Spectra, SFTP, …)
 Spectra/                ← synthetic FS for chaos / integration tests
@@ -34,7 +34,7 @@ Other nearby trees (docs / site / tooling, not always on the critical path): `Sy
 |------|------|------------|
 | **Sylos** | Product launcher: builds UI, embeds it, runs API on one port (~8086). Baked-in defaults, OS keyring master key, first-run admin. | [README.md](./README.md), [ROADMAP.md](./ROADMAP.md) |
 | **Sylos-API** | Chi REST layer, auth/JWT, corebridge → Migration Engine, provider/OAuth routes, migration lifecycle. | [../Sylos-API/README.md](../Sylos-API/README.md), [../Sylos-API/internal/routes/migrations/README.md](../Sylos-API/internal/routes/migrations/README.md) |
-| **Sylos-UI** | Browser UI (Vite/React); talks to API (dev often `:3000` → API `:8086`). | [../Sylos-UI/README.md](../Sylos-UI/README.md) (submodule: [ui/README.md](./ui/README.md)) |
+| **Sylos-UI** | Browser UI (Vite/React); talks to API (dev often `:3000` → API `:8086`). | [../Sylos-UI/README.md](../Sylos-UI/README.md) (optional local link: [ui/README.md](./ui/README.md)) |
 | **Migration-Engine** | One-way migration engine: BFS traversal/copy/delete, queues, Badger seal, autoscaler. **Not** bidirectional sync. | [../Migration-Engine/README.md](../Migration-Engine/README.md) + **docs below** |
 | **Sylos-FS** | `FSAdapter` implementations and cloud OAuth session plumbing used by API + ME. | [../Sylos-FS/README.md](../Sylos-FS/README.md), [../Sylos-FS/pkg/fs/README.md](../Sylos-FS/pkg/fs/README.md), [../Sylos-FS/docs/cloud_provider_checklist.md](../Sylos-FS/docs/cloud_provider_checklist.md) |
 | **Spectra** | Fake filesystem + chaos rate limits for ME/FS integration tests. | [../Spectra/README.md](../Spectra/README.md), [../Spectra/sdk/README.md](../Spectra/sdk/README.md) |
@@ -124,6 +124,6 @@ make build && ./bin/sylos
 # friends / alpha: make release → dist/sylos-alpha.zip
 ```
 
-UI submodule: `ui/` (or sibling Sylos-UI). API-only / no-browser flags are in [README.md](./README.md).
+UI link: `ui/` → sibling Sylos-UI. API-only / no-browser flags are in [README.md](./README.md).
 
 When iterating on ME or FS locally, rebuild the Sylos binary (or run tests in the sibling) so `replace`d modules are picked up.

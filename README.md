@@ -6,12 +6,12 @@ Sylos is a self-hosted migration platform. One binary runs the API and serves th
 ## Quick start (developers)
 
 ```bash
-# Clone with the UI submodule (dev convenience for Vite)
-git clone --recurse-submodules https://github.com/Project-Sylos/Sylos.git
+git clone https://github.com/Project-Sylos/Sylos.git
 cd Sylos
 
 # Sibling repos required for local `replace` builds (see Sylos-Dev-Utils clone_repos.sh)
-# Sylos-API, Migration-Engine, Sylos-FS, Spectra, go-path-linter
+# Sylos-API, Sylos-UI, Migration-Engine, Sylos-FS, Spectra, go-path-linter
+# Optional: ln -sfn ../Sylos-UI ui   # Vite convenience; make/CI do this too
 
 make build
 ./bin/sylos
@@ -69,7 +69,7 @@ Requires Go matching `go.mod`, Node.js/npm (to produce `internal/ui/dist`), and 
 ```
 Sylos/                  ← this repo (unified binary)
 Sylos-API/              ← API server library
-Sylos-UI/               ← web UI (optional submodule at ui/ for Vite)
+Sylos-UI/               ← web UI (optional symlink at ui/ → ../Sylos-UI)
 Migration-Engine/       ← migration SDK
 Sylos-FS/               ← filesystem adapters
 ```
@@ -82,7 +82,7 @@ make release   # build + zip under dist/
 make clean
 ```
 
-Compile only needs a filled `internal/ui/dist` for `go:embed`. The `ui/` submodule is a local Vite convenience; a release can build assets from the Sylos-UI sibling instead.
+Compile only needs a filled `internal/ui/dist` for `go:embed`. The `ui/` symlink is a local Vite convenience; a release builds assets from the Sylos-UI sibling.
 
 ## Developing individual components
 

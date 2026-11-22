@@ -26,14 +26,14 @@ ui: ui/dist
 
 ui/dist:
 	@if [ -d "$(UI_DIR)" ]; then \
-		cd $(UI_DIR) && npm ci --legacy-peer-deps && VITE_API_BASE= npm run build; \
+		(cd $(UI_DIR) && npm ci --legacy-peer-deps && VITE_API_BASE= npm run build); \
 		rm -rf $(UI_DIST); \
 		mkdir -p $(UI_DIST); \
 		cp -r $(UI_DIR)/dist/. $(UI_DIST)/; \
 	elif [ -f "$(UI_DIST)/index.html" ]; then \
 		echo "using existing $(UI_DIST)"; \
 	else \
-		echo "missing $(UI_DIR) submodule and $(UI_DIST); run: git submodule update --init --recursive"; \
+		echo "missing $(UI_DIR) (symlink to ../Sylos-UI) and $(UI_DIST); clone Sylos-UI as a sibling and: ln -sfn ../Sylos-UI ui"; \
 		exit 1; \
 	fi
 
