@@ -12,17 +12,25 @@ OAUTH_CMD := go run ../Sylos-API/cmd/oauthenv
 OAUTH_LDFLAGS := $(shell $(OAUTH_CMD) ldflags $(OAUTH_ENV) $(OAUTH_KEY) 2>/dev/null)
 
 # Repos to test before build/release. Paths are relative to this Makefile's parent.
-TEST_REPOS := Sylos Sylos-API Migration-Engine Sylos-FS Spectra go-path-linter
+TEST_REPOS := Sylos Sylos-API Migration-Engine Sylos-FS Spectra Go-Path-Linter
 
-.PHONY: build run ui ui/dist release tidy fmt test test-all clean oauth-genkey oauth-encrypt
+.PHONY: build run ui ui/dist ensure-ui-dist release tidy fmt test test-all clean oauth-genkey oauth-encrypt
 
-build: test-all ui/dist
+# Fresh clone: seed embed dist if missing, test siblings, rebuild UI, then link the binary.
+build: ensure-ui-dist test-all ui/dist
 	go build -ldflags "$(OAUTH_LDFLAGS)" -o $(BIN) ./cmd/sylos
 
 run: build
 	./$(BIN)
 
 ui: ui/dist
+
+# //go:embed needs at least one file under internal/ui/dist before go test/build.
+ensure-ui-dist:
+	@if [ ! -f "$(UI_DIST)/index.html" ]; then \
+		echo "=== Seeding $(UI_DIST) for go:embed (first build) ==="; \
+		$(MAKE) ui/dist; \
+	fi
 
 ui/dist:
 	@if [ -d "$(UI_DIR)" ]; then \

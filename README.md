@@ -10,7 +10,7 @@ git clone https://github.com/Project-Sylos/Sylos.git
 cd Sylos
 
 # Sibling repos required for local `replace` builds (see Sylos-Dev-Utils clone_repos.sh)
-# Sylos-API, Sylos-UI, Migration-Engine, Sylos-FS, Spectra, go-path-linter
+# Sylos-API, Sylos-UI, Migration-Engine, Sylos-FS, Spectra, Go-Path-Linter
 # Optional: ln -sfn ../Sylos-UI ui   # Vite convenience; make/CI do this too
 
 make build
@@ -39,7 +39,7 @@ There is no `config.yaml`. Defaults are baked into the binary.
 
 ### Tests before compile
 
-`make build` and `make release` run `make test-all` first: `go test ./... -count=1` in this repo and each present replace sibling (`Sylos-API`, `Migration-Engine`, `Sylos-FS`, `Spectra`, `go-path-linter`). Missing siblings are skipped. If any suite fails, the run finishes the rest, prints a short summary of which repos failed (full FAIL lines and traces stay above), and exits without compiling. Use `make test` for this repo only.
+`make build` and `make release` run `make test-all` first: `go test ./... -count=1` in this repo and each present replace sibling (`Sylos-API`, `Migration-Engine`, `Sylos-FS`, `Spectra`, `Go-Path-Linter`). Missing siblings are skipped. If any suite fails, the run finishes the rest, prints a short summary of which repos failed (full FAIL lines and traces stay above), and exits without compiling. Use `make test` for this repo only.
 
 ### Cloud OAuth apps (release builds)
 

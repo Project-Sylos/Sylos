@@ -24,7 +24,7 @@ Spectra/                ← synthetic FS for chaos / integration tests
 
 From this repo, Go `replace` directives point at `../Sylos-API`, `../Migration-Engine`, `../Sylos-FS`, etc. When changing shared behavior, edit the owning sibling — do not fork copies into Sylos.
 
-Other nearby trees (docs / site / tooling, not always on the critical path): `Sylos.wiki/`, `project-sylos.github.io/`, `go-path-linter/`.
+Other nearby trees (docs / site / tooling, not always on the critical path): `Sylos.wiki/`, `project-sylos.github.io/`, `Go-Path-Linter/`.
 
 ---
 
